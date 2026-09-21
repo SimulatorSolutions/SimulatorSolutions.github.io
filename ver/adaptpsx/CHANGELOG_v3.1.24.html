@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelog</title>
+<style>
+  body { font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #333; }
+  h1 { color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 8px; }
+  h2 { color: #2c3e50; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  h3 { color: #34495e; }
+  h4 { color: #4a6278; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; font-size: 0.95em; }
+  pre { background: #f4f4f4; padding: 14px; border-radius: 5px; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.9em; border: 1px solid #ddd; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+  th { background: #eaf2f8; }
+  .note { background: #fef9e7; border-left: 4px solid #f39c12; padding: 10px 14px; margin: 12px 0; }
+  .callout-tip { background: #eafaf1; border-left: 4px solid #27ae60; padding: 10px 14px; margin: 12px 0; }
+  .callout-warning { background: #fef9e7; border-left: 4px solid #f39c12; padding: 10px 14px; margin: 12px 0; }
+  .callout-caution { background: #fdedec; border-left: 4px solid #e74c3c; padding: 10px 14px; margin: 12px 0; }
+  .callout-step { background: #eaf2f8; border-left: 4px solid #2980b9; padding: 10px 14px; margin: 12px 0; }
+  .callout-info { background: #eaf2f8; border-left: 4px solid #2980b9; padding: 10px 14px; margin: 12px 0; }
+  /* Block content nested inside a callout: keep it tight to the box. A heading in here is a
+     label, not a page section, so it drops the section border and the big top margin. */
+  .callout > :first-child { margin-top: 0; }
+  .callout > :last-child { margin-bottom: 0; }
+  .callout h1, .callout h2, .callout h3, .callout h4, .callout h5, .callout h6 {
+    margin: 10px 0 6px; border-bottom: none; padding-bottom: 0; font-size: 1.05em; }
+  .callout table, .callout pre { margin: 8px 0; }
+  .callout blockquote, .callout .callout { margin: 8px 0; }
+  .filepath { color: #7d3c98; }
+  a { color: #2980b9; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+  s { color: #999; }
+</style>
+</head>
+<body>
+
+<h1 id="changelog">Changelog</h1>
+
+<h2 id="contents">Contents</h2>
+<ul>
+  <li><a href="#changelog">Changelog</a><ul>
+  <li><a href="#v3124-2026-09-20">v3.1.24 — 2026-09-20</a></li>
+  <li><a href="#v3123-2026-09-20">v3.1.23 — 2026-09-20</a></li>
+  <li><a href="#v3122-2026-09-20">v3.1.22 — 2026-09-20</a></li>
+  <li><a href="#v3121-2026-08-31">v3.1.21 — 2026-08-31</a></li>
+  <li><a href="#v3120-2026-08-31">v3.1.20 — 2026-08-31</a></li>
+  <li><a href="#v3119-2026-08-28">v3.1.19 — 2026-08-28</a></li>
+  <li><a href="#v3116-2026-08-27">v3.1.16 — 2026-08-27</a></li>
+  <li><a href="#v3115-2026-08-25">v3.1.15 — 2026-08-25</a></li>
+  <li><a href="#v3114-2026-08-25">v3.1.14 — 2026-08-25</a></li>
+  <li><a href="#v31-2026-08-24">v3.1 — 2026-08-24</a></li>
+  <li><a href="#v30-2026-08-21">v3.0 — 2026-08-21</a></li>
+</ul>
+</li>
+</ul>
+
+
+<p>Running changelog for <strong>AdaptPSX</strong> — the PSX ⇄ Aerosoft MCP / hardware adapter.
+Version source of truth: <code>src/AdaptPSX/Master.java</code> (<code>version</code>). Format follows
+<code>standards/APP_STANDARDS.md</code> (B3).</p>
+
+<h2 id="v3124-2026-09-20">v3.1.24 — 2026-09-20</h2>
+
+<ul>
+  <li><strong>Bugfix (auto-update):</strong> the update check now reads its version feed from the GitHub Pages feed the shared Updater publishes (<code>.../ver/adaptpsx/adaptpsx.html</code>). The retired <code>simulatorsolutions.com.au</code> feed served a bogus <code>v B8.0</code> with no download URL, which triggered a false &quot;new version available / visit website&quot; popup on every launch. Existing <code>Adapt.ini</code> files are auto-migrated off the legacy <code>com.au</code> URL — a blank or <code>com.au</code> value is ignored in favour of the built-in default, while any other custom feed you set is still honoured.</li>
+  <li><strong>Change (About tab):</strong> minor layout tidy-up (scroll-pane placement and minimum width).</li>
+</ul>
+
+<h2 id="v3123-2026-09-20">v3.1.23 — 2026-09-20</h2>
+
+<ul>
+  <li><strong>Feature (auto-update, #601):</strong> the <strong>About</strong> tab gains a working <strong>Check For Updates</strong> button for an on-demand version check. When you press it and nothing newer is available it now tells you &quot;You are running the latest version&quot;, and a feed with no version or a network/URL error shows a dialog instead of failing silently. The automatic check at startup is unchanged — it stays silent unless a newer build is found.</li>
+</ul>
+
+<h2 id="v3122-2026-09-20">v3.1.22 — 2026-09-20</h2>
+
+<ul>
+  <li><strong>Change (ACARS):</strong> the RECEIVED-MESSAGES INDEX page title now reads <code>&lt;label&gt; MSG INDEX</code>, taking the label from the configurable ACARS name that already drives the CDU MENU prompt, instead of the hard-coded <code>HACARS</code>.</li>
+  <li><strong>Change (SATCOM):</strong> the <strong>Configuration → SATCOM</strong> sub-tab is now hidden at startup unless <code>enableSATCOM=true</code> in <code>Adapt.ini</code>, so the still-in-development SATCOM controls stay out of the way by default.</li>
+</ul>
+
+<h2 id="v3121-2026-08-31">v3.1.21 — 2026-08-31</h2>
+
+<ul>
+  <li><strong>Feature (ADS-C route awareness):</strong> new active-route parsing (<code>FmcRoute</code>) reads PSX's live FMC route ahead of the aircraft (<code>CduRteLa</code> Qs407) to derive the <strong>Next / Next+1 waypoints</strong> and the <strong>cross-track distance</strong> from the active leg. This is what feeds the v3.1.20 ADS-C waypoint-change (WCE) and lateral-deviation (LDE) event contracts, and it deliberately reads the <em>active</em> route source so &quot;next waypoint&quot; is the true upcoming fix rather than an already-passed one.</li>
+  <li><strong>Chore:</strong> added reference documentation for the datalink and SATCOM work — an ICAO <strong>Doc 10037 (GOLD)</strong> review plus the Honeywell / Cobham / Airbus satellite-comms manuals used to ground the SATCOM page set.</li>
+</ul>
+
+<h2 id="v3120-2026-08-31">v3.1.20 — 2026-08-31</h2>
+
+<ul>
+  <li><strong>Feature (ADS-C event &amp; demand contracts, #547):</strong> ADS-C now answers the full FANS contract set, not just periodic reporting. It accepts <code>REQUEST DEMAND</code> (a single on-request report), <code>REQUEST PERIODIC &lt;sec&gt;</code> (minimum 64 s, default 304 s) and <code>REQUEST EVENTS</code>, and evaluates the four standard event contracts on a 1 Hz tick (ICAO <strong>Doc 10037</strong> §1.2.5.3.6): <strong>waypoint change (WCE)</strong>, <strong>level-range deviation (LRDE)</strong>, <strong>vertical-rate (VRE)</strong> and <strong>lateral deviation (LDE)</strong>. Each event report is tagged with the triggering event; WCE re-fires on every change while the others arm once per contract.</li>
+  <li><strong>Feature (ADS-C emergency mode):</strong> a CPDLC emergency downlink automatically drives ADS-C emergency reporting (Doc 10037 §4.6.2) — sending <strong>MAYDAY</strong> (DM56) or <strong>PAN</strong> (DM55) arms it, <strong>CANCEL EMERGENCY</strong> (DM58) clears it. While armed, every position report is tagged <code>EMERGENCY</code> and periodic contracts report at 64 s; onset and cancellation are pushed to every station holding a contract without waiting for the next interval.</li>
+  <li><strong>Feature (richer position reports):</strong> an optional <strong>rich reports</strong> mode (<code>enableRichReports</code>) appends an earth-reference group (<strong>true track</strong>, <strong>ground speed</strong>, <strong>vertical speed</strong>) and a predicted-route group (<strong>Next / Next+1 waypoints</strong>) to the downlinked reports; the basic position prefix is unchanged so simpler parsers still work.</li>
+  <li><strong>Bugfix (ADS-C altitude):</strong> the altitude in ADS-C position reports was <strong>1000× too high</strong> — PSX supplies altitude in milli-feet and it was being downlinked as-is. It is now scaled correctly, which also fixes the level-range (LRDE) band comparison.</li>
+  <li><strong>Feature (SATCOM — Honeywell SDU page style):</strong> the SATCOM CDU pages can now render in the real <strong>Honeywell MCS-4000/7000 (SD-700)</strong> SDU layout — <code>SATCOM MAIN MENU</code> → DIRECTORY / CATEGORY NUMBERS, MANUAL DIAL, and a SATCOM SUBMENU covering LOG-ON / GES selection, channel status and the maintenance report pages, with the real wording and symbols. It is selectable from the SATCOM tab (&quot;Honeywell SDU page style&quot;, <code>satcomRenderStyle</code>, default Honeywell); the earlier composite page set is kept as a fallback. Both styles drive the same underlying call model.</li>
+  <li><strong>Feature (SATCOM — Honeywell phone directory):</strong> the SAT phone book now models the real Honeywell ORT &quot;Cockpit Telephone Numbers&quot; — up to four categories, a per-entry priority (1–4) and a <strong>protected / unprotected</strong> flag. Unprotected entries render bracketed (<code>[NAME]</code>) and are editable from the CDU CATEGORY NUMBERS page; the standalone directory editor gains a <strong>Protected</strong> column.</li>
+</ul>
+
+<h2 id="v3119-2026-08-28">v3.1.19 — 2026-08-28</h2>
+
+<ul>
+  <li><strong>Feature (ACARS REFUELING report):</strong> the <code>&lt;HACARS</code> REFUELING page now reads the aircraft <strong>weight unit</strong> from PSX pin programming (<code>CfgPinProg</code> Qi30, bit 20 <code>0x100000</code>) and labels the WEIGHTS column <code>KGS X 1000</code> / <code>LBS X 1000</code>, converting the QTY BEFORE / SUPPLIED / ON BOARD / DIFF readouts to the selected unit. <strong>DIFF</strong> is now <code>ON BOARD − (QTY BEFORE + SUPPLIED)</code> — the uplift discrepancy. On refuel start (<code>Refueling</code> Qi220 0→1) QTY BEFORE snapshots ON BOARD and SUPPLY VOL / SUPPLIED zero. <strong>FUEL TYPE</strong> now defaults from the PSX <code>FuelType</code> (Qi192 → JETA / JETA1 / TS1 / JETB) and stays crew-overwritable; <strong>SUPPLIER</strong> defaults to <code>SH</code>.</li>
+  <li><strong>Feature (ACARS FPL DATA report):</strong> once at least one field is entered a <code>SEND&gt;</code> prompt appears at 6R and downlinks the report (<code>ACFT TO DISPATCH</code> / <code>FPL DATA REPORT:</code> / <code>BLOCK FUEL</code> / <code>TAXI FUEL</code> / <code>MATOW</code>) to the <strong>DISPATCH</strong> ACARS-directory address; <code>SEND&gt;</code> then stays hidden until a fresh entry is made. If the DISPATCH entry has no address, <code>NO DISP ADDR</code> shows on the scratchpad and lights the CDU MSG light until the crew clears it (CLR / typing).</li>
+  <li><strong>Change (ACARS REQUEST page):</strong> the request-type toggle moves from 5R to <strong>4L</strong> (<code>&lt;ATIS</code> / <code>&lt;TAF</code> / <code>&lt;WX</code>, with its title on the line above), freeing <strong>5R</strong> as a fifth origin/ICAO slot; the network name no longer prefixes the ATIS request type.</li>
+</ul>
+
+<h2 id="v3116-2026-08-27">v3.1.16 — 2026-08-27</h2>
+
+<ul>
+  <li><strong>Feature (ADS-C):</strong> AdaptPSX now answers Hoppie <strong>ADS-C</strong> surveillance contracts. It accepts <code>REQUEST PERIODIC &lt;sec&gt;</code>, <code>REQUEST EVENTS</code> and <code>CANCEL</code> from any ground station and downlinks <code>REPORT &lt;flight&gt; &lt;DDHHMM&gt; &lt;lat&gt; &lt;long&gt; &lt;alt&gt; &lt;hdg&gt;</code> position reports — built from the live PSX position feed — back to the requester at the contract interval. Availability is gated by the <strong>ADS-C</strong> checkbox (<code>enableADSC</code>, on by default) <strong>and</strong> the aircraft's ADS arm state, read from the native PSX <strong>ATC LOGON/STATUS</strong> page 5L prompt (<code>SELECT OFF</code> = armed, <code>SELECT ARM</code> = off). Turning ADS off (or unticking the box) drops every contract and stops reporting. New <code>AdsC</code> subsystem + <code>HoppieClient.downlinkAdsC</code>.</li>
+  <li><strong>Feature (ACARS requests):</strong> the <code>&lt;HACARS</code> REQUEST page adds <strong>ATIS</strong> and <strong>TAF</strong> requests alongside METAR — one shared airport field feeds <code>REQ METAR</code> / <code>REQ TAF</code> / <code>REQ ATIS</code> buttons that run <code>SENDING</code> → <code>SENT</code>. ATIS routes to the network chosen in the new <strong>Hoppie network</strong> dropdown (VATSIM / IVAO / PilotEdge).</li>
+  <li><strong>Feature (CDU display selection):</strong> the ACARS and SATCOM CDU MENU prompts can now be shown per CDU (L / C / R) from the config tab; default is <strong>Center only</strong>.</li>
+  <li><strong>Bugfix (CDU):</strong> page-change blanking now writes the new lines <em>while</em> the screen is blanked, so the old page no longer flashes through; <code>DELETE</code> + a line-select key blanks that entry field, and <code>CLR</code> now cancels a pending <code>DELETE</code>.</li>
+</ul>
+
+<h2 id="v3115-2026-08-25">v3.1.15 — 2026-08-25</h2>
+
+<ul>
+  <li><strong>Feature (remote printer control):</strong> AdaptPSX now handles <code>addon=</code> commands addressed to it, so any PSX client can remotely toggle the master <strong>Enable Printer Output</strong>. Send <code>addon=adaptpsx;printer;;;enable=1</code> (on) or <code>addon=adaptpsx;printer;;;enable=0</code> (off). The change is immediate — no stop/start — because <code>OutputPrinter.printData</code> reads the flag on every job; the GUI checkbox and status label are kept in sync. New <code>Addon.java</code> parses the <code>addon=&lt;dest&gt;;&lt;destsub&gt;;&lt;src&gt;;&lt;srcsub&gt;;&lt;data&gt;</code> wire protocol (dispatched from <code>NetThread</code>, case-insensitive dest); add future remote commands as extra <code>&lt;destsub&gt;</code> cases.</li>
+</ul>
+
+<h2 id="v3114-2026-08-25">v3.1.14 — 2026-08-25</h2>
+
+<ul>
+  <li><strong>Bugfix (auto-update, #530):</strong> the update check now reads the feed key <code>dlurl=</code> (preferring it and keeping <code>updateurl=</code> as a fallback). The shared Updater publishing tool and the sibling apps (Loader / SimMix / SwitchFS) all write <code>dlurl=</code>, so with a tool-generated feed AdaptPSX previously never saw its download URL and fell back to the website dialog instead of self-installing (<code>standards/APP_STANDARDS.md</code> B8).</li>
+  <li><strong>Chore:</strong> folds in in-progress MainDialog layout tweaks and a satcom reference note.</li>
+</ul>
+
+<h2 id="v31-2026-08-24">v3.1 — 2026-08-24</h2>
+
+<ul>
+  <li><strong>Feature:</strong> Hoppie ACARS / CPDLC integration.</li>
+  <li><strong>Feature:</strong> Central Aggregator logging (application standard B7) — best-effort, non-blocking error/event forwarding via <code>EventForwarder</code>, gated by a GDPR privacy-consent dialog (<code>LoggingConsent</code>) and disabled by default. EDT crashes are funnelled to the forwarder.</li>
+  <li><strong>Standards:</strong> Version numbering moved to <code>major.minor.patch</code> (<code>3.1.0</code>); the auto-update check now compares versions part-by-part instead of as a decimal number, so three-part versions compare correctly and no longer break the update prompt (<code>standards/APP_STANDARDS.md</code> B1/B8).</li>
+  <li><strong>Chore:</strong> Build target moved from Java 10 to <strong>Java 11</strong> (enables the standard <code>java.net.http.HttpClient</code> used by Aggregator logging; requires a Java 11+ runtime).</li>
+</ul>
+
+<h2 id="v30-2026-08-21">v3.0 — 2026-08-21</h2>
+
+<p>Version renumbered to <strong>3.0</strong> to end the earlier <code>1.x</code> / <code>B2.3</code> numbering confusion — the single
+source of truth is now <code>Master.version</code>, and the auto-update feed compares against it.</p>
+
+<ul>
+  <li><strong>Feature:</strong> Auto-update hooks with a certificate check on the downloaded build.</li>
+  <li><strong>Feature:</strong> Multi-CDU handling; externally-controlled TCAS; PTT passthrough; minimise-to-tray.</li>
+  <li><strong>Bugfix:</strong> Printer linefeed; dark look-and-feel; GUI refresh for the autoCopilot setting.</li>
+  <li><strong>Chore:</strong> <code>package-for-store</code> target, <code>.appmap.json</code> and commit hook added — app brought up to the Simulator Solutions application standard for WorkHub deploy.</li>
+</ul>
+
+
+
+</body>
+</html>
