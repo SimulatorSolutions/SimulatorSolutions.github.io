@@ -1,2 +1,2 @@
-# SimStack update manifest - signed 2026-09-28 13:27:05
-fc8b6dc14def9f8e8320e9505a3ca74173deb380f5f90e84d2a76b34738ed23b AdaptPSX.jar
+# SimStack update manifest - signed 2026-09-28 14:04:34
+9b903ae65d60065ab138d45d6b0916fd34155ea72a999a409212f2bb7f8d0995 AdaptPSX.jar
