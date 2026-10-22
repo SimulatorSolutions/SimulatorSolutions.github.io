@@ -1,0 +1,952 @@
+{
+  "version": 1,
+  "source": "SimStack Switch Data Dictionary Field Guide (Dictionary_Field_Guide.md), Data Evaluation User Guide (SwitchFS docs/evaluation_userguide.md 1.3), Integrated-KB 50-simulators pages (dictionary, psx, prosim, flightgear, other-simulators), JeeHell Integration Guide; checked against SwitchFS source: DataDictionary.java, EvaluationHelper.java, FSUIPCHelper.java, SimConDataObject.java, SimConnectDataType, AddonManager.java, XPlaneByteArray.java, XPlaneDataRef.java, XPlaneUdpLink.java, DcsBiosUdpLink.java, FlightGearUdpLink.java, ReEntryHelper.java, NetThread.java, Switch.java, Master.java, exp4j 0.4.8 sources. Work item #764.",
+  "columns": [
+    {
+      "index": 0,
+      "key": "id",
+      "label": "Sim Variable",
+      "help": "The simulator's own name for this value: a SimConnect variable or event name, an FSUIPC hex offset, an X-Plane dataref path, a DCS-BIOS control id, a ProSim variable, a PSX Q-code, and so on. The Switch uses it to translate between the simulator and the Q-code. A row whose first cell starts with # is a comment and is ignored.",
+      "example": "AIRSPEED INDICATED",
+      "required": true
+    },
+    {
+      "index": 1,
+      "key": "abbrev",
+      "label": "SimStack Name",
+      "help": "A short friendly name for the value. The Loader uses it as the name in a sketch, so use letters, digits and _ only (no spaces). The Switch rejects a row whose name contains any of @ # $ % ^ * { } ( ) ~ ` ? , . / : \" ; ' + - ! < > | \\ and marks it ERROR.",
+      "example": "IAS",
+      "pattern": "[A-Za-z0-9_]+",
+      "required": true
+    },
+    {
+      "index": 2,
+      "key": "qcode",
+      "label": "Q-code",
+      "help": "The SimStack code the boards use for this value: a prefix (Qs, Qh, Qi, Qe, Qa or Qc) followed by a number. It must start with a capital Q, must be unique in the file and must not contain spaces or punctuation. The prefix tells you the direction of the data (see the Q-code prefixes).",
+      "example": "Qs4",
+      "pattern": "Q[shieac][0-9]+",
+      "required": true
+    },
+    {
+      "index": 3,
+      "key": "type",
+      "label": "Type",
+      "help": "The data type of the value. What is allowed depends on the simulator: for example FLOAT64 or INT32 for SimConnect and FSUIPC, float or command for X-Plane, integer, string or command for DCS. Some simulators (PSX, ProSim, JeeHell) do not use this column.",
+      "example": "FLOAT64"
+    },
+    {
+      "index": 4,
+      "key": "units",
+      "label": "Units",
+      "help": "Usually descriptive units such as Knots or Feet. For some rows it carries a number or an address instead: the string length for an FSUIPC or X-Plane STRING, the blob size in bytes for a PMDG ADDON parent, and the addr:mask:shift output spec for DCS.",
+      "example": "Knots"
+    },
+    {
+      "index": 5,
+      "key": "resolution",
+      "label": "Resolution",
+      "help": "Controls when a change is sent. For most simulators it is epsilon:rateGroup — the smallest change worth sending, and how often it may be sent (0 = every frame, 1 = about 2 Hz, 2 = about 1 Hz, 3 = about every 5 s, 4 = once). The decimal point matters: 1 is rate group 1, but 1.0 is epsilon 1.0 with no rate cap. ADDON and BIT child rows put Qparent:offset here instead.",
+      "example": "1.0:1"
+    },
+    {
+      "index": 6,
+      "key": "object",
+      "label": "Object",
+      "help": "The entry kind (also called encoding). USER is the normal value; ADDON marks a PMDG Client Data Area parent or child row. Most simulators ignore this column, and USER is the safe convention.",
+      "example": "USER"
+    },
+    {
+      "index": 7,
+      "key": "notes",
+      "label": "Notes",
+      "help": "Free text for people. Use plain ASCII only. A comma inside the note must be in a quoted cell, or it starts a new column and shifts the formula.",
+      "example": "Indicated airspeed"
+    },
+    {
+      "index": 8,
+      "key": "formula",
+      "label": "Evaluation",
+      "help": "Optional formula that the Switch runs on the value, in the form <S|C|B>;<TYPE>;arguments. S changes data from the simulator, C changes data from a board, B changes both. Leave empty for no change. Column 9 in the user guides (1-based) is this column.",
+      "example": "S;DEFAULT;x*1.944"
+    }
+  ],
+  "qcodePrefixes": {
+    "Qs": {
+      "label": "Simulator variable",
+      "help": "A value that comes from the simulator and goes to the boards (sim -> clients). PSX uses Qs for its system and background variables."
+    },
+    "Qh": {
+      "label": "Event / hardware control",
+      "help": "A control that a board sends to the simulator (clients -> sim), such as a switch, button or key event. SimConnect treats every Qh row as an event. PSX uses Qh for its human/hardware discretes."
+    },
+    "Qi": {
+      "label": "Internal / interrogate",
+      "help": "A value that can flow both ways. Also used for PMDG ADDON parent and child rows and for FSUIPC bit-field rows. PSX uses Qi for its commands."
+    },
+    "Qe": {
+      "label": "Environmental",
+      "help": "Environmental data such as power and temperature monitoring (sim -> clients)."
+    },
+    "Qa": {
+      "label": "ARINC data",
+      "help": "ARINC 429 data words (sim -> clients)."
+    },
+    "Qc": {
+      "label": "Config",
+      "help": "Configuration value internal to the Switch. It has no external simulator variable; with the Q Configuration licence the Switch stores the Resolution cell as the value."
+    }
+  },
+  "resolutionGrammars": {
+    "epsilon_rate": {
+      "help": "Three forms are accepted. epsilon:rateGroup (for example 0.5:1) sets both. A number with a decimal point (for example 0.5) sets epsilon only, with no rate cap. A plain integer 0-4 (for example 2) sets the rate group only, with epsilon 0. Empty means epsilon 0, rate group 0. Use 0.0 as the epsilon for on/off and whole-number values. The epsilon must not be empty: ':1' is silently read as 0:0.",
+      "example": "0.01:2"
+    },
+    "double": {
+      "help": "FlightGear reads this column as a plain number: the epsilon (smallest change worth sending). There are no rate groups. Empty means 0. Do not use the epsilon:group form — FlightGear cannot read it and uses 0.",
+      "example": "0.5"
+    },
+    "addon_parent": {
+      "help": "PMDG ADDON parent row (Type BYTES): a rate group only, an integer 0-4. It sets how often the child fields are taken from the data blob. There is no epsilon. 2 (about 1 Hz) is a good default for cockpit panels.",
+      "example": "2"
+    },
+    "addon_child": {
+      "help": "PMDG ADDON child row: the parent row's Q-code, a colon, then the byte offset of this field in the parent blob (a decimal integer from the addon SDK struct). The child uses the parent's rate group.",
+      "example": "Qi499:268"
+    },
+    "bit_child": {
+      "help": "FSUIPC BIT row: the parent row's Q-code, a colon, then one bit number or an inclusive range start-end. Bits are numbered 0-63 and end must not be less than start. Qi700:3 gives 0 or 1; Qi700:8-10 gives a 3-bit value 0-7.",
+      "example": "Qs200:3"
+    }
+  },
+  "simTypes": [
+    {
+      "key": "FSUIPC",
+      "label": "FSUIPC (MSFS/P3D/FSX via FSUIPC) and Sim-Avionics",
+      "simTypeValues": [
+        0,
+        70
+      ],
+      "help": "The Switch reads and writes FSUIPC memory offsets. Column 0 is the offset; the Type sets how many bytes are read. Sim-Avionics (simType 70) uses the same FSUIPC path and the same rules. Bit-field children (Type BIT) take single bits or bit ranges out of a parent offset row.",
+      "resolution": "epsilon_rate",
+      "columns": {
+        "id": {
+          "pattern": "0[xX][0-9A-Fa-f]+|[A-Za-z0-9_]+",
+          "help": "For a normal row, the FSUIPC offset in hex with a 0x prefix (or decimal). For a BIT child row, a unique field name (letters, digits, _) — it is not an offset.",
+          "example": "0x0BC0"
+        },
+        "type": {
+          "allowed": [
+            "INT8",
+            "BYTE",
+            "INT16",
+            "SHORT",
+            "INT32",
+            "INT64",
+            "FLOAT32",
+            "FLOAT64",
+            "STRING",
+            "BIT"
+          ],
+          "caseSensitive": false,
+          "allowEmpty": false,
+          "help": "The value type at the offset; it also sets the number of bytes read (INT8/BYTE 1, INT16/SHORT 2, INT32 4, INT64 8, FLOAT32 4, FLOAT64 8). STRING reads text. BIT marks a bit-field child row whose Resolution is Qparent:bit.",
+          "example": "INT32"
+        },
+        "units": {
+          "pattern": null,
+          "help": "Descriptive units (Knots, Feet, Bool) or the legacy byte count (4, 8) — both work, because the byte size comes from the Type. For STRING, put the string length here (for example 256); if it is not a number the Switch uses 256.",
+          "example": "Knots"
+        },
+        "resolution": {
+          "help": "epsilon:rateGroup, compared with the raw offset value before any formula. If airspeed is stored as knots x 128, an epsilon of 128.0 means 1 knot. A BIT child row puts Qparent:bit or Qparent:start-end here.",
+          "example": "128.0:1"
+        },
+        "object": {
+          "allowed": [
+            "USER",
+            "CONTROL",
+            "ONCE",
+            "EVENT"
+          ],
+          "caseSensitive": false,
+          "allowEmpty": true,
+          "help": "USER for a normal offset, CONTROL for a control offset you write to. The current FSUIPC code does not read this column, so it is a label only.",
+          "example": "USER"
+        }
+      }
+    },
+    {
+      "key": "SIMCONNECT",
+      "label": "SimConnect (MSFS/P3D) and PMDG addon data",
+      "simTypeValues": [
+        5,
+        10
+      ],
+      "help": "The Switch asks SimConnect for simulation variables by name, sends key events, and (with PMDG, simType 10) reads the addon's Client Data Area: one ADDON parent row (Type BYTES) defines the data blob and ADDON child rows pick fields out of it by byte offset. Every Qh row is sent as a key event.",
+      "resolution": "epsilon_rate",
+      "columns": {
+        "id": {
+          "pattern": null,
+          "help": "The SimConnect variable or event name exactly as in the SDK, with an optional :index (GEAR POSITION:1) or an L: local variable (L:MyVar). For an ADDON parent, the CDA name from the addon SDK (PMDG_NG3_Data). For an ADDON child, any unique field name (MCP_Heading).",
+          "example": "AIRSPEED INDICATED"
+        },
+        "type": {
+          "allowed": [
+            "FLOAT64",
+            "FLOAT32",
+            "INT32",
+            "INT64",
+            "STRING8",
+            "STRING32",
+            "STRING64",
+            "STRING128",
+            "STRING256",
+            "STRING260",
+            "STRINGV",
+            "BYTES",
+            "INT8",
+            "INT16"
+          ],
+          "caseSensitive": true,
+          "allowEmpty": false,
+          "help": "The SimConnect data type, in capitals (the Switch matches it exactly). FLOAT64 is the usual choice; STRING8...STRING260 or STRINGV for text. An ADDON parent is always BYTES. An ADDON child uses the C type of the field in the SDK struct: INT8, INT16, INT32, INT64, FLOAT32 or FLOAT64.",
+          "example": "FLOAT64"
+        },
+        "units": {
+          "pattern": null,
+          "help": "The SimConnect unit name (Knots, Feet, Degrees, Bool, Number) — SimConnect converts the value into this unit. For an ADDON parent, the blob size in bytes (for example 4096). For an ADDON child, descriptive only.",
+          "example": "Knots"
+        },
+        "resolution": {
+          "help": "epsilon:rateGroup; SimConnect applies the epsilon itself, so small changes are never sent. An ADDON parent takes a rate group 0-4 only. An ADDON child takes Qparent:byteOffset, for example Qi499:268.",
+          "example": "1.0:1"
+        },
+        "object": {
+          "allowed": [
+            "USER",
+            "EVENT",
+            "ONCE",
+            "CONTROL",
+            "ADDON"
+          ],
+          "caseSensitive": false,
+          "allowEmpty": true,
+          "help": "ADDON marks a PMDG Client Data Area parent or child row — the only value that changes behaviour. USER is a normal variable. EVENT/CONTROL label a key event (the Switch actually decides by the Qh prefix) and ONCE labels read-once data (use rate group 4 to read once).",
+          "example": "USER"
+        }
+      }
+    },
+    {
+      "key": "XPLANE",
+      "label": "X-Plane (XPlaneConnect plugin or native UDP)",
+      "simTypeValues": [
+        21,
+        22
+      ],
+      "help": "The Switch reads and writes X-Plane datarefs and fires X-Plane commands. XPPLUGIN (21) uses the SimStack XPlaneConnect plugin; XPDIRECT (22) uses X-Plane's own RREF/DREF UDP protocol. The dictionary row is the same for both. A row is a command only when its Type is command.",
+      "resolution": "epsilon_rate",
+      "columns": {
+        "id": {
+          "pattern": "[A-Za-z0-9_]+(/[A-Za-z0-9_.\\-]+)+(\\[[0-9]+\\])?",
+          "help": "The dataref or command path, for example sim/cockpit2/gauges/indicators/airspeed_kts_pilot. To read one element of an array, add the index at the end: instrument_brightness_ratio[1]. An un-indexed float array gives only element 0 on XPDIRECT.",
+          "example": "sim/cockpit2/gauges/indicators/airspeed_kts_pilot"
+        },
+        "type": {
+          "pattern": "(?i)(float|int|double|command|string|byte\\[[0-9]+\\]|int\\[[0-9]+\\]|float\\[[0-9]+\\]|double\\[[0-9]+\\])?",
+          "help": "float, int or double for a number (all arrive as float). command for an X-Plane command (send Qh=1 to execute, 2 to begin, 0 to end). byte[N] or STRING reads a byte array as text; int[N] reads it as a comma-separated list of N integers. float[N] is accepted but read as a plain number — index the dataref in column 0 instead.",
+          "example": "float"
+        },
+        "units": {
+          "pattern": null,
+          "help": "Descriptive units (knots, degrees, ratio). For Type STRING, put the text length in bytes here (for example 40); a missing or bad length skips the row. Leave empty for command rows.",
+          "example": "knots"
+        },
+        "resolution": {
+          "help": "epsilon:rateGroup, applied by the Switch (XPDIRECT also uses the rate group to set the RREF rate). For byte arrays use a plain rate group such as 2. Leave empty for command rows.",
+          "example": "0.5:1"
+        },
+        "object": {
+          "help": "Not read for X-Plane. USER is the convention; a command is marked in the Type column, not here.",
+          "example": "USER"
+        }
+      }
+    },
+    {
+      "key": "DCS",
+      "label": "DCS World (via DCS-BIOS)",
+      "simTypeValues": [
+        23
+      ],
+      "help": "The Switch reads DCS-BIOS's binary export and sends plain-text commands. DCS-BIOS must be installed in DCS. Column 4 carries the DCS-BIOS output address spec, not units. A row with sim in column 4 belongs to the SimStackControl.lua hook (pause, mission load).",
+      "resolution": "epsilon_rate",
+      "columns": {
+        "id": {
+          "pattern": "[A-Za-z0-9_]+",
+          "help": "The DCS-BIOS control identifier from the module JSON, used as-is in the command (UFC_1, AAP_PAGE). For a sim-control row, the hook value name (SIM_PAUSE).",
+          "example": "UFC_COMM1_CHANNEL"
+        },
+        "type": {
+          "allowed": [
+            "integer",
+            "string",
+            "command"
+          ],
+          "caseSensitive": false,
+          "allowEmpty": true,
+          "help": "integer (the default) reads (word & mask) >> shift; string reads len bytes from addr; command is send-only and has no readback.",
+          "example": "integer"
+        },
+        "units": {
+          "pattern": "((0[xX][0-9A-Fa-f]+|[0-9]+):(0[xX][0-9A-Fa-f]+|[0-9]+)(:(0[xX][0-9A-Fa-f]+|[0-9]+))?|[Ss][Ii][Mm])?",
+          "help": "The DCS-BIOS output spec: addr:mask:shift for an integer, addr:len for a string (hex with 0x, or decimal, from the module JSON address/mask/shift_by or max_length). Leave empty for a command row. Write sim for a sim-control hook row.",
+          "example": "0x1012:0xc000:14"
+        },
+        "resolution": {
+          "help": "epsilon:rateGroup for integer outputs, for example 0:2. Strings are sent on change only, so a plain rate group is enough. Leave empty for command rows.",
+          "example": "0:2"
+        },
+        "object": {
+          "help": "Not read for DCS. USER is the convention.",
+          "example": "USER"
+        }
+      }
+    },
+    {
+      "key": "FLIGHTGEAR",
+      "label": "FlightGear (Generic Protocol over UDP)",
+      "simTypeValues": [
+        7
+      ],
+      "help": "The Switch builds a FlightGear Generic Protocol XML file from the dictionary; FlightGear then sends every property in one UDP line. After any dictionary change, press Connect, copy the XML to FlightGear's Protocol folder again and restart FlightGear.",
+      "resolution": "double",
+      "columns": {
+        "id": {
+          "pattern": "/\\S+",
+          "help": "The FlightGear property path, starting with /, for example /instrumentation/airspeed-indicator/indicated-speed-kt.",
+          "example": "/position/latitude-deg"
+        },
+        "type": {
+          "allowed": [
+            "float",
+            "double",
+            "int",
+            "bool",
+            "string"
+          ],
+          "caseSensitive": false,
+          "allowEmpty": true,
+          "help": "int, bool or string; anything else (or empty) is sent as float.",
+          "example": "float"
+        },
+        "units": {
+          "pattern": null,
+          "help": "Descriptive units only (kts, deg, feet); not read by the Switch.",
+          "example": "deg"
+        },
+        "resolution": {
+          "help": "A plain number: the epsilon (smallest change worth sending). No rate groups and no colon.",
+          "example": "0.0001"
+        },
+        "object": {
+          "help": "Not read for FlightGear; may be empty.",
+          "example": ""
+        }
+      }
+    },
+    {
+      "key": "PSX",
+      "label": "Aerowinx PSX",
+      "simTypeValues": [
+        4
+      ],
+      "help": "PSX already speaks Q-codes, so the dictionary mainly gives each PSX variable its SimStack name for the Loader and carries optional formulas. Columns 3-6 are not used with PSX. PSX uses its own meanings for Qs (system), Qh (hardware discretes) and Qi (commands).",
+      "resolution": null,
+      "columns": {
+        "id": {
+          "pattern": "Q[a-z][0-9]+",
+          "help": "The PSX Q-code as listed in PSX's variables.txt (Developers folder), for example Qs1 or Qh28.",
+          "example": "Qs1"
+        },
+        "type": {
+          "help": "Not used with PSX (INT by convention).",
+          "example": "INT"
+        },
+        "units": {
+          "help": "Not used with PSX (1 by convention).",
+          "example": "1"
+        },
+        "resolution": {
+          "help": "Not used with PSX — PSX sends changes as they happen (1 by convention).",
+          "example": "1"
+        },
+        "object": {
+          "help": "Not used with PSX; leave empty.",
+          "example": ""
+        }
+      }
+    },
+    {
+      "key": "PROSIM",
+      "label": "ProSim-AR (737 / A320)",
+      "simTypeValues": [
+        1
+      ],
+      "help": "The Switch connects to ProSim over TCP and translates ProSim variable names to Q-codes with the dictionary. Columns 3-6 are not used. Rows whose name starts with S_ (switch) or CB_ (circuit breaker) get their values turned into ProSim state names (Normal/Pushed/Pulled).",
+      "resolution": null,
+      "columns": {
+        "id": {
+          "pattern": "[A-Za-z0-9_]+",
+          "help": "The ProSim variable name exactly as ProSim uses it, for example S_MASTER_BATTERY_SWITCH.",
+          "example": "S_MASTER_BATTERY_SWITCH"
+        },
+        "type": {
+          "help": "Not used with ProSim; leave empty.",
+          "example": ""
+        },
+        "units": {
+          "help": "Not used with ProSim; leave empty.",
+          "example": ""
+        },
+        "resolution": {
+          "help": "Not used with ProSim — ProSim sends changes as they happen.",
+          "example": ""
+        },
+        "object": {
+          "help": "Not used with ProSim; leave empty.",
+          "example": ""
+        }
+      }
+    },
+    {
+      "key": "JEEHELL",
+      "label": "JeeHell FMGS A320",
+      "simTypeValues": [
+        6
+      ],
+      "help": "The Switch connects to the SimStackJHA320.dll plug-in in JeeHell over TCP (port 10747). Column 0 is the JeeHell label in Tag:Index form. Columns 3-6 are not used but must be present.",
+      "resolution": null,
+      "columns": {
+        "id": {
+          "pattern": "[SLDT]:-?[0-9]+",
+          "help": "The JeeHell label: S: switch input (to JeeHell), L: lamp/LED output, D: numeric data, T: text, followed by the index. Must match the JeeHell API exactly.",
+          "example": "L:173"
+        },
+        "type": {
+          "help": "Not used with JeeHell (int by convention).",
+          "example": "int"
+        },
+        "units": {
+          "help": "Not used with JeeHell (1 by convention).",
+          "example": "1"
+        },
+        "resolution": {
+          "help": "Not used with JeeHell (1 by convention).",
+          "example": "1"
+        },
+        "object": {
+          "help": "Not used with JeeHell. The samples label the tag kind: Switch, LED, Data or Text.",
+          "example": "LED"
+        }
+      }
+    },
+    {
+      "key": "REENTRY",
+      "label": "Reentry (space capsule simulator)",
+      "simTypeValues": [
+        92
+      ],
+      "help": "The Switch exchanges JSON messages with the Reentry game over UDP. Column 0 addresses one control as CRAFT:MSGTYPE:ID; values are whole-number positions.",
+      "resolution": null,
+      "columns": {
+        "id": {
+          "pattern": "[0-9]+:[0-9]+:[0-9]+",
+          "help": "TargetCraft:MessageType:ID, three whole numbers separated by colons, for example 0:0:3.",
+          "example": "0:0:3"
+        },
+        "type": {
+          "help": "Not read; values are whole numbers (INT by convention).",
+          "example": "INT"
+        },
+        "units": {
+          "help": "Not read (pos by convention).",
+          "example": "pos"
+        },
+        "resolution": {
+          "help": "Not read (1 by convention).",
+          "example": "1"
+        },
+        "object": {
+          "help": "Not read; the samples put the spacecraft name here (Mercury, Gemini, ApolloCommandModule).",
+          "example": "Mercury"
+        }
+      }
+    },
+    {
+      "key": "OTHER",
+      "label": "Other interfaces (API, DSix, MODBUS, UDP, NEW)",
+      "simTypeValues": [
+        3,
+        90,
+        91,
+        99,
+        80
+      ],
+      "help": "Generic interfaces. API (3) behaves like PSX and passes Q-codes straight through. DSix (90) maps hex offsets such as 0x0001 in column 0 to Q-codes. UDP (99), MODBUS (91) and NEW (80) pass Q-codes with formulas. Only the general column rules apply.",
+      "resolution": null,
+      "columns": {}
+    }
+  ],
+  "formula": {
+    "help": "General form: <S|C|B>;<TYPE>;argument;argument... The Switch splits the cell at every ';' AND every '=' (so an '=' inside an expression or text breaks it into extra tokens). Empty tokens at the end are dropped, so a trailing ';' (S;DEFAULT;x/128;) is harmless. Do not put spaces in the direction or type token. Only the CONFIG type keeps its text whole.",
+    "directions": {
+      "S": "Server: change values that come from the simulator, before they go to the boards.",
+      "C": "Client: change values that come from a board or other client (also the web UI), before they go to the simulator.",
+      "B": "Both: change values whatever their origin."
+    },
+    "expression": {
+      "variables": [
+        "x"
+      ],
+      "functions": {
+        "sin": 1,
+        "cos": 1,
+        "tan": 1,
+        "cot": 1,
+        "log": 1,
+        "log2": 1,
+        "log10": 1,
+        "log1p": 1,
+        "abs": 1,
+        "acos": 1,
+        "asin": 1,
+        "atan": 1,
+        "cbrt": 1,
+        "floor": 1,
+        "sinh": 1,
+        "sqrt": 1,
+        "tanh": 1,
+        "cosh": 1,
+        "ceil": 1,
+        "pow": 2,
+        "exp": 1,
+        "expm1": 1,
+        "signum": 1
+      },
+      "constants": [
+        "pi",
+        "π",
+        "e",
+        "φ"
+      ],
+      "operators": [
+        "+",
+        "-",
+        "*",
+        "/",
+        "^",
+        "%"
+      ],
+      "help": "An exp4j expression where x is the incoming value. Use + - * / ^ (power) % (remainder), brackets, and the listed functions; trigonometry works in radians. Write multiplication explicitly (x*2). Example: (x-32)*5/9 converts Fahrenheit to Celsius.",
+      "functionHelp": {
+        "abs": "Absolute value: abs(-5) = 5",
+        "acos": "Arc cosine (radians): acos(0.5) = 1.047",
+        "asin": "Arc sine (radians): asin(0.5) = 0.524",
+        "atan": "Arc tangent (radians): atan(1) = 0.785",
+        "cbrt": "Cube root: cbrt(27) = 3",
+        "ceil": "Round up to a whole number: ceil(4.2) = 5",
+        "cos": "Cosine (radians): cos(3.14159) = -1",
+        "cosh": "Hyperbolic cosine",
+        "cot": "Cotangent (radians)",
+        "exp": "e to the power x: exp(1) = 2.718",
+        "expm1": "e to the power x, minus 1 (exact for small x)",
+        "floor": "Round down to a whole number: floor(4.8) = 4",
+        "log": "Natural logarithm (base e): log(2.718) = 1",
+        "log10": "Logarithm base 10: log10(100) = 2",
+        "log1p": "Natural logarithm of 1 + x (exact for small x)",
+        "log2": "Logarithm base 2: log2(8) = 3",
+        "pow": "x to the power y: pow(2,3) = 8 (same as 2^3)",
+        "signum": "Sign: -1, 0 or 1: signum(-5) = -1",
+        "sin": "Sine (radians): sin(1.5708) = 1",
+        "sinh": "Hyperbolic sine",
+        "sqrt": "Square root: sqrt(9) = 3",
+        "tan": "Tangent (radians)",
+        "tanh": "Hyperbolic tangent"
+      }
+    },
+    "types": [
+      {
+        "name": "DEFAULT",
+        "help": "Applies one formula to the value.",
+        "example": "S;DEFAULT;x*0.3048",
+        "args": [
+          {
+            "name": "expression",
+            "kind": "expr",
+            "help": "The formula; x is the incoming value."
+          }
+        ],
+        "minArgs": 1,
+        "maxArgs": 1
+      },
+      {
+        "name": "DEFAULT_BOUNDED",
+        "help": "Applies one formula, then clamps the result between a lower and an upper limit.",
+        "example": "S;DEFAULT_BOUNDED;x*0.6;0;100",
+        "args": [
+          {
+            "name": "expression",
+            "kind": "expr",
+            "help": "The formula; x is the incoming value."
+          },
+          {
+            "name": "lower",
+            "kind": "number",
+            "help": "Lowest value sent."
+          },
+          {
+            "name": "upper",
+            "kind": "number",
+            "help": "Highest value sent."
+          }
+        ],
+        "minArgs": 3,
+        "maxArgs": 3
+      },
+      {
+        "name": "MULTI",
+        "help": "Applies several formulas to the same value and sends the results joined with ';'. Use it for example to turn a heading into sine and cosine.",
+        "example": "S;MULTI;sin(x);cos(x)",
+        "args": [
+          {
+            "name": "expression",
+            "kind": "expr",
+            "help": "One formula per token; add as many as you need."
+          }
+        ],
+        "minArgs": 1,
+        "maxArgs": null
+      },
+      {
+        "name": "PLUSMINUS",
+        "help": "Uses the first formula when the value is zero or positive, and the second when it is negative.",
+        "example": "S;PLUSMINUS;x*10;x*-5",
+        "args": [
+          {
+            "name": "positive",
+            "kind": "expr",
+            "help": "Formula for x >= 0."
+          },
+          {
+            "name": "negative",
+            "kind": "expr",
+            "help": "Formula for x < 0."
+          }
+        ],
+        "minArgs": 2,
+        "maxArgs": 2
+      },
+      {
+        "name": "CONFIG",
+        "help": "Ignores the incoming value and sends fixed configuration text instead.",
+        "example": "S;CONFIG;extra;data",
+        "args": [
+          {
+            "name": "data",
+            "kind": "text",
+            "help": "Fixed text; any number of tokens."
+          }
+        ],
+        "minArgs": 1,
+        "maxArgs": null
+      },
+      {
+        "name": "LOOKUP",
+        "help": "Reserved. The Switch recognises the name but does nothing — the value passes through unchanged. Do not use it.",
+        "example": "S;LOOKUP",
+        "args": [
+          {
+            "name": "data",
+            "kind": "text",
+            "help": "Ignored."
+          }
+        ],
+        "minArgs": 0,
+        "maxArgs": null
+      },
+      {
+        "name": "SCRIPT",
+        "help": "Calls a JavaScript function from the Switch's scripts folder (needs enableScripting=true in Switch.ini). Extra tokens are passed to the function as ctx.args. The name is case-sensitive.",
+        "example": "B;SCRIPT;headingFormatted;3",
+        "args": [
+          {
+            "name": "function",
+            "kind": "script",
+            "help": "The JavaScript function name, exactly as in the .js file."
+          },
+          {
+            "name": "arg",
+            "kind": "text",
+            "help": "Optional extra arguments, passed as ctx.args."
+          }
+        ],
+        "minArgs": 1,
+        "maxArgs": null
+      },
+      {
+        "name": "CURVE",
+        "help": "Maps the value through a response curve drawn on the Switch's Configuration > Curves tab (needs the Q Configuration licence; without it the value passes unchanged). Give the input and output ranges; the Switch warns when they are missing.",
+        "example": "S;CURVE;3;0;16383;0;1",
+        "args": [
+          {
+            "name": "id",
+            "kind": "curve",
+            "help": "The curve profile number from the Curves tab."
+          },
+          {
+            "name": "inMin",
+            "kind": "number",
+            "help": "Lowest expected input (default 0)."
+          },
+          {
+            "name": "inMax",
+            "kind": "number",
+            "help": "Highest expected input (default 1)."
+          },
+          {
+            "name": "outMin",
+            "kind": "number",
+            "help": "Output for the lowest input (default 0)."
+          },
+          {
+            "name": "outMax",
+            "kind": "number",
+            "help": "Output for the highest input (default 1)."
+          },
+          {
+            "name": "centre",
+            "kind": "number",
+            "help": "Optional, bipolar curves only: the raw input that means centre (default: midpoint of inMin..inMax)."
+          }
+        ],
+        "minArgs": 1,
+        "maxArgs": 6
+      },
+      {
+        "name": "VJOY",
+        "help": "Sends the value to a vJoy virtual joystick axis or button, so the simulator sees the hardware as a game controller. The message then goes nowhere else: not to the simulator, not to the boards (before #780 it was also passed on). POV and SLIDER are accepted but do nothing yet.",
+        "example": "C;VJOY;1;AXIS;1;0;0;16383;3",
+        "args": [
+          {
+            "name": "joystick",
+            "kind": "int",
+            "help": "vJoy device number, 1-16."
+          },
+          {
+            "name": "control",
+            "kind": "enum",
+            "values": [
+              "AXIS",
+              "BUTTON",
+              "POV",
+              "SLIDER"
+            ],
+            "help": "AXIS or BUTTON (capitals)."
+          },
+          {
+            "name": "index",
+            "kind": "int",
+            "help": "Axis number (1 = X) or button number."
+          },
+          {
+            "name": "value",
+            "kind": "number",
+            "help": "Not used — put 0."
+          },
+          {
+            "name": "min",
+            "kind": "number",
+            "help": "Input value for the axis minimum (min > max inverts the axis). For BUTTON, 1 inverts the button. If min or max is empty or not a number, the Switch uses 0 and 32768."
+          },
+          {
+            "name": "max",
+            "kind": "number",
+            "help": "Input value for the axis maximum (empty = 32768, see min)."
+          },
+          {
+            "name": "curve",
+            "kind": "curve",
+            "help": "Optional, AXIS only: a response curve id (needs the Q Configuration licence)."
+          },
+          {
+            "name": "centre",
+            "kind": "number",
+            "help": "Optional, bipolar curves only: the raw input that means centre."
+          }
+        ],
+        "minArgs": 3,
+        "maxArgs": 8
+      },
+      {
+        "name": "CANBUS",
+        "help": "Packs the value into a CAN bus signal and sends the frame on a named bus, with physical = raw x scale + offset. Do not put spaces around the tokens.",
+        "example": "S;CANBUS;controls;200;0;16;0.01;-327.68;LE;S",
+        "args": [
+          {
+            "name": "busId",
+            "kind": "text",
+            "help": "The named CAN bus, for example overhead."
+          },
+          {
+            "name": "msgId",
+            "kind": "text",
+            "pattern": "(0[xX])?[0-9A-Fa-f]+",
+            "help": "The CAN message id in hex, with or without 0x (1A0)."
+          },
+          {
+            "name": "startBit",
+            "kind": "int",
+            "help": "First bit of the signal (DBC convention)."
+          },
+          {
+            "name": "bitLen",
+            "kind": "int",
+            "help": "Number of bits in the signal."
+          },
+          {
+            "name": "scale",
+            "kind": "number",
+            "help": "Scale factor (default 1.0)."
+          },
+          {
+            "name": "offset",
+            "kind": "number",
+            "help": "Offset (default 0.0)."
+          },
+          {
+            "name": "byteOrder",
+            "kind": "enum",
+            "values": [
+              "LE",
+              "BE"
+            ],
+            "help": "LE (Intel, default) or BE (Motorola)."
+          },
+          {
+            "name": "signed",
+            "kind": "enum",
+            "values": [
+              "S",
+              "U"
+            ],
+            "help": "S signed or U unsigned (default)."
+          }
+        ],
+        "minArgs": 4,
+        "maxArgs": 8
+      },
+      {
+        "name": "ARINC740",
+        "help": "Hands the value to the ARINC 740 cockpit printer handler.",
+        "example": "C;ARINC740;sub;SYS;DID;;Qs500",
+        "args": [
+          {
+            "name": "subtype",
+            "kind": "text",
+            "help": "Message subtype."
+          },
+          {
+            "name": "SYS",
+            "kind": "text",
+            "help": "System id (normally an octal number)."
+          },
+          {
+            "name": "DID",
+            "kind": "text",
+            "help": "Device id of the endpoint."
+          },
+          {
+            "name": "data",
+            "kind": "text",
+            "help": "Not used — leave empty."
+          },
+          {
+            "name": "outCode",
+            "kind": "text",
+            "help": "Optional Q-code for the output."
+          }
+        ],
+        "minArgs": 3,
+        "maxArgs": 5
+      },
+      {
+        "name": "ARINC739",
+        "help": "ARINC 739 MCDU handler (parsed, but the processing is not active in the current Switch).",
+        "example": "C;ARINC739;sub;SYS;DID;;Qs500",
+        "args": [
+          {
+            "name": "subtype",
+            "kind": "text",
+            "help": "Message subtype."
+          },
+          {
+            "name": "SYS",
+            "kind": "text",
+            "help": "System id."
+          },
+          {
+            "name": "DID",
+            "kind": "text",
+            "help": "Device id of the endpoint."
+          },
+          {
+            "name": "data",
+            "kind": "text",
+            "help": "Not used — leave empty."
+          },
+          {
+            "name": "outCode",
+            "kind": "text",
+            "help": "Optional Q-code for the output."
+          }
+        ],
+        "minArgs": 3,
+        "maxArgs": 5
+      },
+      {
+        "name": "ARINC429",
+        "help": "ARINC 429 data word handler (parsed, but the processing is not active in the current Switch; use SCRIPT with ARINCWord for 429 encoding).",
+        "example": "S;ARINC429;sub;SYS;DID;;Qa1",
+        "args": [
+          {
+            "name": "subtype",
+            "kind": "text",
+            "help": "Message subtype."
+          },
+          {
+            "name": "SYS",
+            "kind": "text",
+            "help": "System id."
+          },
+          {
+            "name": "DID",
+            "kind": "text",
+            "help": "Device id of the endpoint."
+          },
+          {
+            "name": "data",
+            "kind": "text",
+            "help": "Not used — leave empty."
+          },
+          {
+            "name": "outCode",
+            "kind": "text",
+            "help": "Optional Q-code for the output."
+          }
+        ],
+        "minArgs": 3,
+        "maxArgs": 5
+      }
+    ]
+  }
+}

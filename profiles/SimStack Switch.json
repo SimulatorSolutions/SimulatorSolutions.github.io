@@ -1,0 +1,22 @@
+{
+  "name": "SimStack Switch",
+  "pfx_path": "C:/Users/jgoli/Documents/NetBeansProjects/SimAgentPython/SimulatorSolutions.pfx",
+  "release_dir": "D:/OneDrive/Simulator Solutions/SimStack Software/SimStack Loader/Release",
+  "git_repo_root": "D:/code/SimulatorSolutions.github.io",
+  "subpath": "Switch",
+  "app_id": "switch",
+  "public": false,
+  "commit_zip": false,
+  "url": "http://www.simulatorsolutions.com.au",
+  "verurl": "https://simulatorsolutions.github.io/ver/switch/switch.html",
+  "dlurl": "https://simulatorsolutions.github.io/ver/switch/release/",
+  "version_file_path": "c:/temp/upd/ver",
+  "autoupdate_output_dir": "c:/temp/upd/data",
+  "standalone_output_dir": "c:\\temp\\upd\\standalone",
+  "download_base_url": "http://www.simulatorsolutions.com.au",
+  "store_profile_in_git": true,
+  "description": "SimStack Switch Application",
+  "last_version": "9.154",
+  "last_zip_filename": "",
+  "pending_version": "9.154"
+}
