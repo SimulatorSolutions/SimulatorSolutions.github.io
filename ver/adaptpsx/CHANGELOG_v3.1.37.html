@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdaptPSX — Changelog (by feature area) — v3.1.37</title>
+<style>
+  body { font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #333; }
+  h1 { color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 8px; }
+  h2 { color: #2c3e50; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  h3 { color: #34495e; }
+  h4 { color: #4a6278; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; font-size: 0.95em; }
+  img { max-width: 100%; height: auto; display: block; margin: 16px auto; }
+  pre { background: #f4f4f4; padding: 14px; border-radius: 5px; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.9em; border: 1px solid #ddd; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+  th { background: #eaf2f8; }
+  .note { background: #fef9e7; border-left: 4px solid #f39c12; padding: 10px 14px; margin: 12px 0; }
+  .callout-tip { background: #eafaf1; border-left: 4px solid #27ae60; padding: 10px 14px; margin: 12px 0; }
+  .callout-warning { background: #fef9e7; border-left: 4px solid #f39c12; padding: 10px 14px; margin: 12px 0; }
+  .callout-caution { background: #fdedec; border-left: 4px solid #e74c3c; padding: 10px 14px; margin: 12px 0; }
+  .callout-step { background: #eaf2f8; border-left: 4px solid #2980b9; padding: 10px 14px; margin: 12px 0; }
+  .callout-info { background: #eaf2f8; border-left: 4px solid #2980b9; padding: 10px 14px; margin: 12px 0; }
+  /* Block content nested inside a callout: keep it tight to the box. A heading in here is a
+     label, not a page section, so it drops the section border and the big top margin. */
+  .callout > :first-child { margin-top: 0; }
+  .callout > :last-child { margin-bottom: 0; }
+  .callout h1, .callout h2, .callout h3, .callout h4, .callout h5, .callout h6 {
+    margin: 10px 0 6px; border-bottom: none; padding-bottom: 0; font-size: 1.05em; }
+  .callout table, .callout pre { margin: 8px 0; }
+  .callout blockquote, .callout .callout { margin: 8px 0; }
+  .filepath { color: #7d3c98; }
+  a { color: #2980b9; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+  s { color: #999; }
+</style>
+</head>
+<body>
+
+<h1 id="adaptpsx-changelog-by-feature-area-v3137">AdaptPSX — Changelog (by feature area) — v3.1.37</h1>
+
+<h2 id="contents">Contents</h2>
+<ul>
+  <li><a href="#adaptpsx-changelog-by-feature-area-v3137">AdaptPSX — Changelog (by feature area) — v3.1.37</a><ul>
+  <li><a href="#hoppie-datalink-acars-cpdlc-ads-c-new">Hoppie Datalink — ACARS, CPDLC &amp; ADS-C *(new)*</a></li>
+  <li><a href="#auto-update-security">Auto-update &amp; Security</a></li>
+  <li><a href="#satcom-747-sdu-in-development-hidden-by-default">SATCOM — 747 SDU *(in development, hidden by default)*</a></li>
+  <li><a href="#stability-performance">Stability &amp; Performance</a></li>
+  <li><a href="#central-logging">Central Logging</a></li>
+  <li><a href="#monitor-tab-remote-control-ui">Monitor Tab, Remote Control &amp; UI</a></li>
+  <li><a href="#build-standards-documentation">Build, Standards &amp; Documentation</a></li>
+</ul>
+</li>
+</ul>
+
+
+<p><strong>AdaptPSX</strong> connects to the Aerowinx <strong>Precision Simulator X (PSX)</strong> Boeing 747-400 simulator
+over TCP/IP. It bridges the simulator's state to external hardware and utilities: Aerosoft and
+CPFlight MCP panels, Engravity CDUs, GPS, printers and data recording.</p>
+
+<p>This is the <strong>internal</strong> changelog. It covers <strong>the last 18 months (April 2025 – October 2026)</strong>,
+up to and including <strong>v3.1.37</strong>. It includes the SATCOM work, which is hidden by default. It is
+grouped <strong>by feature area</strong>, not by date, and each bullet says when the change landed, so it
+doubles as a &quot;what to test&quot; guide. Sections are ordered biggest first. Almost all of the work is
+the <strong>v3.0 / v3.1 cycle (May – October 2026)</strong>.</p>
+
+<hr>
+
+<h2 id="hoppie-datalink-acars-cpdlc-ads-c-new">Hoppie Datalink — ACARS, CPDLC &amp; ADS-C <em>(new)</em></h2>
+
+<p>The largest addition: a full datalink suite over the Hoppie network, built on the existing PSX
+connection and CDU framework. It covers airline messaging (ACARS/AOC), controller–pilot datalink
+(CPDLC) and position surveillance (ADS-C). Put most test effort here:</p>
+
+<ul>
+  <li>send and receive</li>
+  <li>logon, rejection, handover and logoff on disconnect</li>
+  <li>ADS-C contracts and emergency mode</li>
+  <li>survival of bad server replies</li>
+</ul>
+
+<ul>
+  <li><strong>Hoppie ACARS / CPDLC integration</strong> <em>(Aug 2026, v3.1)</em> — ACARS gets its own <code>&lt;HACARS</code> CDU page set. CPDLC bridges PSX's native FANS datalink, and a rejected logon is shown on the EICAS advisory line. The flight number is synced from PSX so both share one callsign. CDU rendering became colour-aware. Settings live on a new <strong>Hoppie ACARS</strong> tab.</li>
+  <li><strong>ACARS pages</strong> <em>(Aug 2026, v3.1.16 – v3.1.19)</em>:</li>
+  <li><strong>TELEX</strong> messages with an editable address directory. Sent and received telexes are mirrored into PSX's ACARS store, raising the memo, chime and CDU MSG light.</li>
+  <li>An <strong>OOOI STATUS</strong> page with a two-column print, and a message index sorted by flight phase.</li>
+  <li>A weather <strong>REQUEST</strong> page for METAR / TAF / ATIS (five airport slots after v3.1.19). ATIS goes to the selected network (VATSIM / IVAO / PilotEdge).</li>
+  <li>A <strong>REFUELING</strong> report in the aircraft's weight unit, where DIFF is the uplift discrepancy.</li>
+  <li><strong>FPL DATA</strong> sent to DISPATCH.</li>
+  <li><strong>ACARS index title</strong> <em>(Sep 2026, v3.1.22)</em> — uses the configurable ACARS label instead of a fixed <code>HACARS</code>.</li>
+  <li><strong>ADS-C surveillance</strong> <em>(Aug 2026, v3.1.16 → v3.1.21, #547)</em>:</li>
+  <li>Demand, periodic (64 s minimum) and event contracts. The events are waypoint change, level-range, vertical-rate and lateral deviation (ICAO Doc 10037).</li>
+  <li>Follows the aircraft's ADS arm state and the <strong>ADS-C</strong> checkbox.</li>
+  <li>MAYDAY / PAN switches on emergency reporting.</li>
+  <li>Optional <strong>rich reports</strong> add track, ground speed, vertical speed and the next two waypoints, from the live FMC route.</li>
+  <li><strong>Fixed:</strong> report altitude was 1000× too high.</li>
+  <li><strong>Datalink robustness</strong> <em>(Sep 2026, v3.1.27)</em> — one malformed server reply no longer stops all uplinks until restart, and stealth-mode messages are no longer dropped when the ID gains a digit. An uplink processed during shutdown no longer writes to PSX.</li>
+  <li><strong>CPDLC logon, logoff and checkbox</strong> <em>(Sep 2026, v3.1.27)</em> — a rejection from a new station no longer logs you off the current one, and an acceptance is no longer sent to PSX twice. Disconnecting while logged on sends ATC a logoff. With CPDLC off, PSX's FANS state is left alone. The checkbox takes effect at once. No flight number shows <code>&gt;NO FLT NUMBER</code> on EICAS.</li>
+  <li><strong>CPDLC text handling</strong> <em>(Sep 2026, v3.1.27, v3.1.29)</em> — uplinks are upper-cased, <code>;</code> / <code>^</code> are made safe, and <code>@_@</code> shows as a blank line.</li>
+  <li><strong>CPDLC as fg-cpdlc-lib</strong> <em>(Sep 2026, v3.1.28, v3.1.29)</em>:</li>
+  <li>Each downlink carries the right response flag: replies and reports <code>N</code>; requests, emergencies and free text <code>Y</code>.</li>
+  <li>Logoff is sent as <code>LOGOFF</code> / <code>N</code>.</li>
+  <li>Message numbers (MIN) come from a running counter.</li>
+  <li><strong>Automatic handover logon</strong> on <code>HANDOVER</code> / <code>NEXT DATA AUTHORITY</code>. A rejection keeps the current station and shows <code>&gt;LOGON REJECTED</code>.</li>
+  <li><strong>Hoppie checkbox renamed</strong> <em>(Oct 2026, v3.1.35)</em> — now <strong>Enable Hoppie Connection</strong>, because it switches ACARS, CPDLC and ADS-C. The ini key is unchanged.</li>
+</ul>
+
+<h2 id="auto-update-security">Auto-update &amp; Security</h2>
+
+<p>The update path was rebuilt over the period. It now uses a working feed with an on-demand check,
+installs reliably on Windows, and checks the package strictly before it touches any file. Test
+these cases: a manual check, an update over a running copy, and that a tampered or wrong-app
+package is refused.</p>
+
+<ul>
+  <li><strong>Auto-update with certificate check</strong> <em>(May 2026)</em> — first auto-update hooks, with a certificate check on the downloaded build.</li>
+  <li><strong>Version comparison</strong> <em>(Aug 2026, v3.1)</em> — compares part by part, so three-part versions work.</li>
+  <li><strong><code>dlurl=</code> feed key</strong> <em>(Aug 2026, v3.1.14, #530)</em> — read as the sibling apps write it (keeping <code>updateurl=</code>), so the app installs updates itself instead of only pointing to the website.</li>
+  <li><strong>Manual Check For Updates</strong> <em>(Sep 2026, v3.1.23, #601)</em> — the <strong>About</strong> tab button checks on demand and reports &quot;latest version&quot;, or shows a dialog for a feed or network error.</li>
+  <li><strong>Feed moved and logged</strong> <em>(Sep 2026, v3.1.24, v3.1.25)</em> — off the retired <code>com.au</code> feed, which caused a false &quot;new version&quot; popup on every launch. Old ini values are migrated automatically. The default is now <code>update.simulatorsolutions.com.au</code> with GitHub Pages as fallback, and every check logs its steps.</li>
+  <li><strong>Self-update works on Windows</strong> <em>(Sep 2026, v3.1.26)</em> — the helper runs from a copy (<code>AdaptPSX-updater.jar</code>), so the locked running jar can be replaced. The copy is deleted on the next start.</li>
+  <li><strong>Signed package required</strong> <em>(Oct 2026, v3.1.34)</em> — <code>manifest.sig</code> is mandatory, every file needs a SHA-256, and every path must stay inside the install folder. The update stops before any file is touched.</li>
+  <li><strong>Update bound to app and offered version</strong> <em>(Oct 2026, v3.1.34)</em> — the signed manifest must name <code>adaptpsx</code>, and its version must be the one the feed offered and newer than installed. This blocks downgrades and cross-app packages.</li>
+  <li><strong>Updates need logging</strong> <em>(Oct 2026, v3.1.34, #536)</em> — no version check runs unless logging is on. The start-up check follows the logging switch.</li>
+  <li><strong>Native look for update windows</strong> <em>(Oct 2026, v3.1.34, H360)</em>.</li>
+</ul>
+
+<h2 id="satcom-747-sdu-in-development-hidden-by-default">SATCOM — 747 SDU <em>(in development, hidden by default)</em></h2>
+
+<p>A simulated 744 satellite phone system on the CDU, with Asterisk ARI call control. It is hidden
+unless <code>enableSATCOM=true</code> and runs in simulated mode until Asterisk is configured. Test it only
+with SATCOM enabled.</p>
+
+<ul>
+  <li><strong>SAT CDU pages, ARI call control, phone directory</strong> <em>(Aug 2026, v3.1)</em> — the page set, an ARI adapter (simulated by default) and a JSON directory with an editor.</li>
+  <li><strong>Incoming calls</strong> <em>(Aug 2026, v3.1)</em> — the EICAS <code>SATCOM CALL</code> memo, a user-chosen SAT CALL lamp variable for each channel, and an optional scratchpad / MSG alert. Answer from the CDU or by selecting SAT on the ACP.</li>
+  <li><strong>Realism options</strong> <em>(Aug 2026, v3.1)</em> — the CDU blanks on page change. &quot;SATCOM requires IRS aligned&quot; shows the channels <code>NOT AVAILABLE</code> until the IRS are aligned. Channels are unavailable while logged off.</li>
+  <li><strong>SATCOM tab in the NetBeans form</strong> <em>(Aug 2026, v3.1)</em>.</li>
+  <li><strong>Honeywell SDU page style</strong> <em>(Aug 2026, v3.1.20)</em> — the real MCS-4000/7000 (SD-700) layout, which is the default; the composite style is kept. The directory models the Honeywell ORT list (categories, priorities, protected entries).</li>
+  <li><strong>Hidden by default</strong> <em>(Sep 2026, v3.1.22; Oct 2026, v3.1.35)</em> — the SATCOM sub-tab and then the Monitor-tab SATCOM row are hidden unless <code>enableSATCOM=true</code>.</li>
+</ul>
+
+<h2 id="stability-performance">Stability &amp; Performance</h2>
+
+<p>Fixes to keep AdaptPSX responsive through long, busy PSX sessions and dropped connections. Test
+these: a session with debug on and heavy traffic, pulling the PSX connection, a failed startup, and a missing or empty <code>Adapt.ini</code>.</p>
+
+<ul>
+  <li><strong>Debug console no longer freezes the GUI</strong> <em>(Aug 2026, v3.1, #517)</em> — writes are batched instead of queuing one screen update each.</li>
+  <li><strong>Thread-safe GUI updates</strong> <em>(Aug 2026, v3.1, #517)</em> — status labels, the printer and chat logs, the connect state and the update progress bar.</li>
+  <li><strong>Dropped connection handled</strong> <em>(Aug 2026, v3.1, #517)</em> — no 100% CPU spin when PSX closes the socket silently; it reconnects. A malformed line no longer kills the reader.</li>
+  <li><strong>Disconnect flood fixed</strong> <em>(Aug 2026, v3.1)</em> — clean-up runs exactly once, instead of flooding the console with &quot;PSX CONNECTION CLOSED&quot;.</li>
+  <li><strong>Leak and concurrency fixes</strong> <em>(Aug 2026, v3.1, #514 – #516)</em> — in chat users, the GPS time formatter, the serial log and ACARS file writes.</li>
+  <li><strong>Startup failures reported</strong> <em>(Oct 2026, v3.1.36)</em> — an error during startup used to leave the splash up forever with no output (the trace went to the hidden debug area). Now the trace goes to the console and <code>startup-error.log</code>, the splash is removed, a dialog explains the error and the app exits. A 30 s watchdog logs a thread dump if startup hangs.</li>
+  <li><strong>Settings backup and automatic restore</strong> <em>(Oct 2026, v3.1.37, #802)</em> — a missing <code>Adapt.ini</code> used to reset every setting to its default. After each load that reads settings, <code>IniLoad</code> now copies the ini to <code>&lt;ini&gt;.bak</code> (<code>Adapt.ini.bak</code>; one per instance when a custom ini is passed). At start-up, if the ini is missing or empty (0 bytes, for example truncated by a crash during a save) and the <code>.bak</code> exists, AdaptPSX copies the <code>.bak</code> back and loads it. There is no prompt, unlike Switch's manual-restore dialog. An ini that loads empty never overwrites the <code>.bak</code>. <code>*.ini.bak</code> is git-ignored, because it holds the hoppieKey.</li>
+</ul>
+
+<h2 id="central-logging">Central Logging</h2>
+
+<p>Best-effort error and event forwarding to the Simulator Solutions Aggregator. It is off by default
+and behind a consent prompt, and it is worded as in the Loader.</p>
+
+<ul>
+  <li><strong>Aggregator logging</strong> <em>(Aug 2026, v3.1, #518)</em> — with a privacy-consent dialog, configured in <strong>Configuration</strong> &gt; <strong>General</strong> &gt; <strong>Logging</strong>.</li>
+  <li><strong>Loader consent wording</strong> <em>(Oct 2026, v3.1.34, #536)</em> — the same dialog text and privacy link as the Loader.</li>
+  <li><strong>Name (email)</strong> <em>(Oct 2026, v3.1.34, #725)</em> — required for logging, and asked for when missing. <strong>Cancel</strong> leaves logging off.</li>
+</ul>
+
+<h2 id="monitor-tab-remote-control-ui">Monitor Tab, Remote Control &amp; UI</h2>
+
+<ul>
+  <li><strong>Activity timestamps</strong> <em>(Aug 2026, v3.1)</em> — last ACARS / CPDLC / SATCOM activity times. There is also an <strong>Aerosoft</strong> row with the MCP firmware version.</li>
+  <li><strong>Remote printer switch</strong> <em>(Aug 2026, v3.1.15)</em> — <code>addon=adaptpsx;printer;;;enable=1</code> / <code>=0</code> from any PSX client turns printer output on or off at once.</li>
+  <li><strong>Per-CDU menu prompts</strong> <em>(Aug 2026, v3.1.16)</em> — choose which CDUs (L / C / R) show the ACARS and SATCOM prompts. Default is Center only.</li>
+  <li><strong>About tab tidy-up</strong> <em>(Sep 2026, v3.1.24)</em>.</li>
+</ul>
+
+<h2 id="build-standards-documentation">Build, Standards &amp; Documentation</h2>
+
+<ul>
+  <li><strong>Version 3.0 and app standard</strong> <em>(Aug 2026, v3.0)</em> — renumbered from 1.5 to 3.0. Added the <code>package-for-store</code> fat-jar target, <code>.appmap.json</code> and the patch-bumping commit hook for WorkHub deploy.</li>
+  <li><strong>Java 11 required</strong> <em>(Aug 2026, v3.1)</em> — the build moved from Java 10 to Java 11.</li>
+  <li><strong>User Guide and Technical Manual</strong> <em>(Oct 2026)</em> — to the <code>simstack-docs</code> standard, with generated diagrams and real screenshots.</li>
+  <li><strong>Public guide and changelogs</strong> <em>(Oct 2026, v3.1.35)</em> — a SATCOM-free User Guide generated from the full one, and changelogs in internal / <code>-p-satcom</code> / <code>-p</code> forms.</li>
+</ul>
+
+<hr>
+
+<p><em>Version numbers are <code>major.minor.patch</code>. The patch number goes up by one on every commit (commit
+hook), so released versions skip numbers.</em></p>
+
+
+
+</body>
+</html>
